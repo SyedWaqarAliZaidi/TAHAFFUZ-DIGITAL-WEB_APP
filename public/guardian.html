@@ -1,0 +1,28 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Tahaffuz guardian</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel=stylesheet>
+<link rel=stylesheet href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"><link rel=stylesheet href=style.css>
+<div class=app><div id=gmap></div><div class=chip style="left:14px"><img src=logo-mark.png alt=""> Guardian</div>
+<div class=sheet id=gate><h1>Be a guardian?</h1><p>You will see their location only during an active journey or alert. You can leave any time.</p><button class=btn onclick="accept()">Accept</button></div>
+<div class=sheet id=view hidden><span class=tag id=gt>Quiet</span><h2 id=ct style="margin-top:6px">No active journey</h2><p id=cs></p>
+<button id=en class="btn g">Turn on alerts</button><div class=row><button class=btn onclick="ack('calling her')">I'm calling</button><button class=btn onclick="ack('on my way')">On my way</button></div>
+<a id=callb class="btn" hidden>Call</a><button class="btn g" onclick="post('safe')">She's safe: end alert</button><button class="btn g" onclick="leave()">Stop being a guardian</button></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script><script src=map.js></script>
+<script>
+const q=new URLSearchParams(location.search),name=q.get('name')||'Guardian',key='tz-g-'+name;
+const post=(p,b)=>fetch('/api/'+p,{method:'POST',body:JSON.stringify(b||{})}),ack=w=>post('ack',{who:name+' is '+w});
+function open_(){gate.hidden=true;view.hidden=false}function accept(){localStorage.setItem(key,1);post('accept',{name});open_();en.click()}
+let MAP,prev='idle',rk='';initMap('gmap','#FF4B55').then(m=>MAP=m);
+const u8=b=>{const p='='.repeat((4-b.length%4)%4),r=atob((b+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...r].map(c=>c.charCodeAt(0)))};
+en.onclick=async()=>{try{if(!('serviceWorker' in navigator)||!window.PushManager)throw 'Push needs https or localhost';const reg=await navigator.serviceWorker.register('/sw.js');
+ if(await Notification.requestPermission()!=='granted')throw 'Permission denied';const {key}=await (await fetch('/api/vapid')).json();
+ const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(key)});await post('sub',{sub:sub.toJSON(),name,role:'g'});en.textContent='Alerts on'}catch(e){en.textContent='Alerts unavailable. '+e}};
+// Gentle two-note chime, quiet, at most once every 10 seconds while an alert is active.
+feed('g',s=>{const ph=s.phase,hot=['guardians','call','police'].includes(ph);
+ if(MAP&&s.route&&s.active&&JSON.stringify(s.route[0])!==rk){rk=JSON.stringify(s.route[0]);MAP.line(s.route);MAP.fit(s.route)}
+ if(s.meta&&s.meta.phone){callb.hidden=false;callb.href='tel:'+s.meta.phone;callb.textContent='📞 Call '+(s.meta.user||'her')}
+ gt.textContent=hot?'Alert':s.active?'Watching':'Quiet';ct.textContent=!s.active?'No active journey':hot?'Alert: '+s.reason:ph==='acked'?s.ack:ph==='prompt'?'Checking if she is OK':'Journey in progress';
+ cs.textContent=hot?'Please respond now.':s.active&&s.meta?(s.meta.from||'').split(',')[0]+' to '+(s.meta.to||'').split(',')[0]:'';
+ if(MAP&&s.pos)MAP.pos(s.pos[0],s.pos[1]);if(hot){if(prev!==ph&&window.Notification&&Notification.permission==='granted')new Notification('Tahaffuz alert',{body:s.reason})}prev=ph});
+function leave(){localStorage.removeItem(key);post('leave',{name});view.hidden=true;gate.hidden=false}
+if(localStorage.getItem(key))open_();
+</script>
