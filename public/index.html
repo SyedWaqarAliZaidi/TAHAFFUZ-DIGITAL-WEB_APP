@@ -1,0 +1,154 @@
+<!doctype html><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Tahaffuz</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel=stylesheet>
+<link rel=stylesheet href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"><link rel=stylesheet href=style.css>
+<div class=app><div id=splash><img src=logo-full.png alt=Tahaffuz><div class=bar></div></div>
+<div class="pin lg" id=login hidden><img src=logo-full.png alt=""><h1>Welcome</h1><p>Log in so your guardians know who is travelling.</p><input class=in id=ln placeholder="Your name"><input class=in id=lp inputmode=tel placeholder="Phone number"><button class=btn onclick="doLogin(false)">Log in</button><button class="btn g" onclick="doLogin(true)">Continue without logging in</button><p style="font-size:12px">Demo sign-in: details stay on this device.</p></div>
+<div id=toasts><div class="toast pb" id=permbar hidden><b>🔔 Turn on notifications?</b><p>So Tahaffuz can ask “Are you safe?” and alert your guardians.</p><div class=row><button onclick="permbar.hidden=true;enablePush()">Allow</button><button onclick="permbar.hidden=true">Later</button></div></div></div>
+<div id=map></div>
+<button class=chip style="left:14px" id=lg><img src=logo-mark.png alt=""> Tahaffuz</button>
+<button class=chip style="right:14px" onclick="show('g')">👥 <span id=gc>0</span> guardians</button>
+<div class=sheet id=home hidden><h1 id=hi>Hello</h1><p>How can Tahaffuz help you today?</p><div class=tiles>
+<button class="tile t1" onclick="show('plan')"><i>🧭</i><b>Safe journey</b><span>Plan a trip with guardians</span></button>
+<button class="tile t2" onclick="show('emg')"><i>🚨</i><b>Emergency</b><span>Call 15 or alert guardians</span></button>
+<button class="tile t3" onclick="show('g')"><i>👥</i><b>Guardians</b><span id=hg>Add up to 3</span></button>
+<button class="tile t4" onclick="openNear()"><i>🏥</i><b>Nearby help</b><span>Police and hospitals</span></button>
+<button class="tile t5" onclick="openPlaces()"><i>📍</i><b>Safe places</b><span>Auto-detect and mark</span></button>
+<button class="tile t6" onclick="show('rights')"><i>📘</i><b>Know your rights</b><span>Tips and helplines</span></button></div></div>
+<div class=sheet id=plan hidden><button class="btn g" onclick="show('home')" style="padding:9px;margin:0 0 8px">‹ Home</button><h1>Where to?</h1><p>Plan your trip and your guardians will watch over it.</p>
+<div class=field><i class=dot></i><input id=pu placeholder="Pick-up: current location" autocomplete=off></div><div class=sg id=s1></div>
+<div class=field><i class="dot sq"></i><input id=do placeholder="Drop-off: search a place in Pakistan" autocomplete=off></div><div class=sg id=s2></div>
+<div class=field><i class=dot style="background:var(--amb)"></i><input id=veh placeholder="Vehicle plate (rickshaw or taxi), optional" autocomplete=off></div>
+<div class="card gr" onclick="show('g')">👥 <div><b id=gl>Add your guardians</b><p>They get alerts if something goes wrong</p></div><span style="margin-left:auto">›</span></div></div>
+<div class=sheet id=rev hidden><h1 id=rt>Route ready</h1><p id=rs></p><div class=sum><div><b id=kd></b>distance</div><div><b id=ke></b>est. time</div><div><b id=kg></b>guardians</div></div>
+<button class=btn onclick="startJ()">Start safe journey</button><button class="btn g" onclick="show('plan')">Change trip</button></div>
+<div class=sheet id=live hidden><span class=tag id=lt>Monitoring</span><h2 id=lh style="margin-top:6px">You're being watched over</h2><p id=ls></p><p id=sg2></p>
+<div class=lad id=ld></div><div class=act><button class="btn g" onclick="post('detour')">↪ Different route</button><button class="btn g" onclick="post('detour')">⏸ Making a stop</button></div>
+<button class="btn sos" id=sosb>Hold to send SOS</button><p style="text-align:center">Hold for 1.5 seconds. Prevents accidental alerts.</p>
+<div class=row><button class="btn g" onclick="pn.hidden=false">I'm safe</button><button class="btn g" onclick="endJ()">End trip</button></div></div>
+<div class=sheet id=emg hidden><h2>Emergency</h2><p>These open your phone's dialer.</p><a class="btn sos" href="tel:15">📞 Call Police 15</a><div class=row><a class="btn g" href="tel:1122">🚑 Rescue 1122</a><a class="btn g" href="tel:115">🏥 Edhi 115</a></div>
+<button class="btn sos" id=sosb2>Hold to alert my guardians</button><p style="text-align:center">Sends your location to your guardians now.</p><button class="btn g" onclick="show('home')">Back</button></div>
+<div class=sheet id=near hidden><h2>Nearby help</h2><p>Nearest police stations and hospitals, marked on the map (🚓 police, 🏥 hospital). OpenStreetMap data, may be incomplete.</p><div id=nc></div><div id=nl></div><button class="btn g" onclick="clearMarks();show('home')">Back</button></div>
+<div class=sheet id=plc hidden><h2>Safe places</h2><p>Tahaffuz scans the area around the map and marks places that are likely safe (🛡️). It is an automatic estimate, not a guarantee.</p>
+<button class=btn onclick="scanSafe()">🔍 Scan this area</button><div id=ap></div>
+<div class=card><b>Mark a place yourself</b><p>Pan the map to a spot, then mark it. Community reports are unverified.</p><input class=in id=pnote placeholder="Short note, e.g. well lit, staff helpful"><div class=row><button class=btn onclick="markHere('safe')">✅ Safe</button><button class="btn sos" style="font-size:16px;padding:17px;margin-top:6px" onclick="markHere('unsafe')">⚠️ Unsafe</button></div></div>
+<div id=pl></div><button class="btn g" onclick="clearMarks();show('home')">Back</button></div>
+<div class=sheet id=rights hidden><h2>Know your rights</h2><p>General guidance, not legal advice.</p>
+<div class=card><b>Harassment is not your fault</b><p>Street and workplace harassment can be reported. You do not need to be sure it is a crime to call 15.</p></div>
+<div class=card><b>Before you travel</b><p>Share your trip, note the vehicle plate, keep your phone charged, and tell a guardian your route.</p></div>
+<div class=card><b>If you feel followed</b><p>Move to a busy, lit place, call a guardian, and use Call 15. Do not confront the person.</p></div>
+<div class=card><b>Helplines</b><p>Police 15 · Rescue 1122 · Edhi 115.</p></div><button class="btn g" onclick="show('home')">Back</button></div>
+<div class=sheet id=g hidden><h2>Your guardians</h2><p>Up to 3. They must accept before they see anything, and can leave any time.</p><div id=cl></div>
+<div id=af class=card><b>Add a guardian</b><input class=in id=cn placeholder="Name"><input class=in id=cp placeholder="WhatsApp number, e.g. 923001234567"><button class=btn onclick="addC()">Add guardian</button></div><button class="btn g" onclick="show('home')">Done</button><button class="btn g" onclick="signOut()">Sign out</button></div>
+<div class=sheet id=dm hidden><h2>Demo tools</h2><p>Simulated GPS, signal and police console.</p><div class=row><button class="btn g" onclick="sim.drift=!sim.drift">Drift off route</button><button class="btn g" onclick="sim.lost=!sim.lost">Lose signal</button></div><button class="btn g" style="margin-top:8px" onclick="sim.stop=!sim.stop">Stop moving</button>
+<label class=card style="display:block"><input type=checkbox id=real> Use real GPS</label><div class=card id=pol>No police packet.</div><button class="btn g" onclick="show(S.active?'live':'home')">Close</button></div>
+<div class=pin id=pn hidden><h1>Are you safe?</h1><p>Enter your PIN to cancel the alert.</p><input class=in id=pin type=password inputmode=numeric maxlength=4 placeholder="••••"><button class=btn onclick="post('ok',{pin:pin.value});pin.value='';pn.hidden=true">Confirm</button></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script><script src=map.js></script>
+<script>
+const $=s=>document.querySelector(s),post=(p,b)=>fetch('/api/'+p,{method:'POST',body:JSON.stringify(b||{})}),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const OWNER=localStorage.tzid||(localStorage.tzid=Date.now().toString(36)+Math.random().toString(36).slice(2,8));
+let MAP,S={G:{}},C=[],PL=[],U=JSON.parse(localStorage.getItem('tz-user')||'null'),P=null,D=null,RT=[],sim={i:0,drift:false,lost:false,stop:false},lastFix=0,tap=0,emg=false;
+const u8=b=>{const p='='.repeat((4-b.length%4)%4),r=atob((b+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...r].map(c=>c.charCodeAt(0)))};
+async function enablePush(){try{if(!('serviceWorker' in navigator)||!window.PushManager)throw 0;const reg=await navigator.serviceWorker.register('/sw.js');if(await Notification.requestPermission()!=='granted')throw 0;
+ const {key}=await (await fetch('/api/vapid')).json(),sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(key)});post('sub',{sub:sub.toJSON(),role:'t'})}catch{}}
+function boot(){login.hidden=true;hi.textContent='Hello, '+((U&&U.n)||'Traveller');show('home');if(window.Notification){if(Notification.permission==='default')permbar.hidden=false;else if(Notification.permission==='granted')enablePush()}}
+function doLogin(g){U=g?{n:'Traveller',guest:1}:{n:ln.value.trim()||'Traveller',p:lp.value.trim()};localStorage.setItem('tz-user',JSON.stringify(U));boot()}
+function signOut(){localStorage.removeItem('tz-user');location.reload()}
+setTimeout(()=>{splash.style.opacity=0;setTimeout(()=>splash.remove(),500);U?boot():login.hidden=false},2100);
+const SH=['home','plan','rev','live','g','dm','emg','near','plc','rights'];function show(n){SH.forEach(x=>$('#'+x).hidden=x!==n)}
+async function load(){try{const d=await (await fetch('/api/data?owner='+OWNER)).json();C=d.guardians;PL=d.places}catch{}drawC();drawPlaces()}
+initMap('map','#00AEEF').then(m=>{MAP=m;load();navigator.geolocation&&navigator.geolocation.getCurrentPosition(g=>{P={lat:g.coords.latitude,lng:g.coords.longitude,n:'Current location'};pu.value='Current location';MAP.view(P.lat,P.lng,14);MAP.pos(P.lat,P.lng)})});
+async function geo(q){try{const r=await (await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=5&countrycodes=pk&q='+encodeURIComponent(q))).json();if(r.length)return r.map(x=>({lat:+x.lat,lng:+x.lon,n:x.display_name.split(',').slice(0,3).join(',')}))}catch{}
+ try{const r=await (await fetch('https://photon.komoot.io/api/?limit=5&q='+encodeURIComponent(q+' Pakistan'))).json();return r.features.map(f=>({lat:f.geometry.coordinates[1],lng:f.geometry.coordinates[0],n:[f.properties.name,f.properties.city||f.properties.state].filter(Boolean).join(', ')}))}catch{return null}}
+let tm;function search(inp,box,set){inp.oninput=()=>{clearTimeout(tm);tm=setTimeout(async()=>{if(inp.value.length<3){box.innerHTML='';return}const r=await geo(inp.value);box.innerHTML='';
+ if(!r){box.innerHTML='<div>Search unavailable. Check your connection.</div>';return}if(!r.length)box.innerHTML='<div>No places found</div>';r.forEach(x=>{const d=document.createElement('div');d.textContent=x.n;d.onclick=()=>{set(x);inp.value=x.n;box.innerHTML='';route()};box.appendChild(d)})},700)}}
+search(pu,s1,v=>P=v);search($('#do'),s2,v=>D=v);
+const km=(a,b)=>Math.hypot((a[0]-b[0])*111,(a[1]-b[1])*101),straight=(a,b)=>Array.from({length:61},(_,i)=>[a.lat+(b.lat-a.lat)*i/60,a.lng+(b.lng-a.lng)*i/60]);
+const risk=pts=>PL.filter(p=>p.type==='unsafe'&&pts.some(q=>km([p.lat,p.lng],q)<.2)).length;
+async function route(){if(!P||!D||!MAP)return;let d,min,note='Route is checked every few seconds.';
+ try{const j=await (await fetch(`https://router.project-osrm.org/route/v1/driving/${P.lng},${P.lat};${D.lng},${D.lat}?overview=full&geometries=geojson&alternatives=true`)).json();
+  const rs=j.routes.map(r=>({pts:r.geometry.coordinates.map(c=>[c[1],c[0]]),d:r.distance/1000,m:r.duration/60}));rs.forEach(r=>r.u=risk(r.pts));
+  const best=[...rs].sort((a,b)=>a.u-b.u||a.m-b.m)[0];RT=best.pts;d=best.d;min=best.m;
+  note='Safety check: '+best.u+' unsafe report'+(best.u===1?'':'s')+' near this route.'+(best!==rs[0]?' We picked a safer alternative.':'')}
+ catch{RT=straight(P,D);d=km([P.lat,P.lng],[D.lat,D.lng]);min=d/25*60;note='Routing service unreachable: showing an approximate straight line.'}
+ MAP.line(RT);MAP.fit(RT);kd.textContent=d.toFixed(1)+' km';ke.textContent=Math.max(1,Math.round(min))+' min';kg.textContent=C.length;rt.textContent='To '+D.n.split(',')[0];rs.textContent='From '+P.n.split(',')[0]+'. '+note;show('rev')}
+function startJ(){if(!C.length&&!confirm('You have no guardians yet. Start anyway?'))return;emg=false;sim.i=0;sim.drift=sim.lost=sim.stop=false;post('start',{route:RT,contacts:C,meta:{from:P.n,to:D.n,user:(U&&U.n)||'Traveller',phone:U&&U.p,vehicle:veh.value.trim()}});show('live')}
+function endJ(){emg=false;post('end');show('home')}
+function emergency(){const c=P||{lat:24.8607,lng:67.0011};emg=true;post('sos',{lat:c.lat,lng:c.lng,contacts:C,user:(U&&U.n)||'Traveller',phone:U&&U.p});show('live')}
+setInterval(()=>{if(!S.active||sim.lost||!RT.length||emg)return;if(real.checked&&Date.now()-lastFix<5000)return;const p=RT[Math.min(sim.i,RT.length-1)];if(!sim.stop)sim.i=Math.min(RT.length-1,sim.i+Math.max(1,Math.floor(RT.length/60)));
+ const q=[p[0]+(sim.drift?.004:0),p[1]];MAP.pos(q[0],q[1]);post('hb',{lat:q[0],lng:q[1]})},2000);
+navigator.geolocation&&navigator.geolocation.watchPosition(g=>{if((real.checked||emg)&&S.active&&!sim.lost){lastFix=Date.now();const q=[g.coords.latitude,g.coords.longitude];MAP.pos(q[0],q[1]);MAP.view(q[0],q[1]);post('hb',{lat:q[0],lng:q[1]})}});
+async function addC(){if(C.length>=3||!cn.value||!cp.value)return;await post('g_add',{owner:OWNER,n:cn.value.trim(),p:cp.value});cn.value=cp.value='';load()}
+async function delC(id){await post('g_del',{owner:OWNER,id});load()}
+function inv(i){const c=C[i];window.open('https://wa.me/'+c.p+'?text='+encodeURIComponent(c.n+', please be my Tahaffuz guardian. Open to accept: '+location.origin+'/guardian.html?name='+encodeURIComponent(c.n)),'_blank')}
+function drawC(){gc.textContent=C.length;kg.textContent=C.length;hg.textContent=C.length?C.length+' ready':'Add up to 3';gl.textContent=C.length?C.length+' guardian'+(C.length>1?'s':'')+' ready':'Add your guardians';
+ cl.innerHTML=C.map((c,i)=>'<div class=card><b>'+esc(c.n)+'</b> <span class=tag>'+(S.G[c.n]?'Accepted '+S.G[c.n]:'Invited')+'</span>'+(c.perm?' <span class=tag>Permanent</span>':'')+'<p>+'+esc(c.p)+'</p><div class=row><button class="btn g" onclick="inv('+i+')">Invite on WhatsApp</button>'+(c.perm?'':'<button class="btn g" onclick="delC(\''+c.id+'\')">Remove</button>')+'</div></div>').join('');af.hidden=C.length>=3}
+function drawPlaces(){if(MAP)MAP.pins(PL.map(p=>({lat:p.lat,lng:p.lng,e:p.type==='safe'?'🟢':'🔴',l:(p.type==='safe'?'Safe: ':'Unsafe: ')+(p.note||'')})),'plc');
+ pl.innerHTML=PL.filter(p=>p.mine).map(p=>'<div class=card>'+(p.type==='safe'?'🟢':'🔴')+' '+esc(p.note||'(no note)')+' <button class="btn g" style="width:auto;padding:6px 12px;float:right" onclick="delP(\''+p.id+'\')">Delete</button></div>').join('')}
+async function delP(id){await post('place_del',{owner:OWNER,id});load()}
+function openPlaces(){clearMarks();show('plc');drawPlaces();scanSafe()}
+async function markHere(t){if(!MAP)return;const c=MAP.center();await post('place_add',{owner:OWNER,lat:c[0],lng:c[1],type:t,note:pnote.value.trim()});pnote.value='';load()}
+
+// ---- Shared helpers for nearby help and auto-detected safe places ----
+const OVP=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter'];
+// Tries our own server first (avoids browser/adblock/CORS problems), then the public servers directly.
+async function ovq(q){const errs=[];
+ try{const r=await fetch('/api/ov?q='+encodeURIComponent(q));if(r.ok)return (await r.json()).elements||[];errs.push('server '+r.status)}catch(e){errs.push('server '+e.message)}
+ for(const u of OVP){try{const c=new AbortController(),t=setTimeout(()=>c.abort(),15000);const r=await fetch(u,{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'},signal:c.signal});clearTimeout(t);if(!r.ok)throw new Error('HTTP '+r.status);return (await r.json()).elements||[]}catch(e){errs.push(e.message)}}
+ throw new Error(errs.join(' | '))}
+// Backup data source: Nominatim search inside a box around the point.
+async function nomFind(term,c,km_){const d=km_/111,v=[c.lng-d*1.1,c.lat+d,c.lng+d*1.1,c.lat-d].join(',');
+ const r=await (await fetch('https://nominatim.openstreetmap.org/search?format=json&limit=30&bounded=1&viewbox='+v+'&q='+encodeURIComponent(term))).json();
+ return r.map(x=>({lat:+x.lat,lng:+x.lon,n:x.name||x.display_name.split(',')[0]}))}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const pt=e=>({lat:e.lat!==undefined?e.lat:e.center&&e.center.lat,lng:e.lon!==undefined?e.lon:e.center&&e.center.lon});
+function clearMarks(){if(MAP){MAP.pins([],'near');MAP.pins([],'auto')}}
+function flyTo(a,b){MAP.view(a,b,17)}
+const dirUrl=(a,b)=>'https://www.google.com/maps/dir/?api=1&destination='+a+','+b;
+function item(ic,n,sub,a,b){return '<div class="card gr" onclick="flyTo('+a+','+b+')"><span style="font-size:24px">'+ic+'</span><div><b>'+esc(n)+'</b><p>'+sub+'</p></div><a class="tag" style="margin-left:auto;text-decoration:none" target=_blank rel=noopener onclick="event.stopPropagation()" href="'+dirUrl(a,b)+'">Directions</a></div>'}
+function here(){return new Promise(res=>{if(P)return res(P);if(!navigator.geolocation)return res(null);navigator.geolocation.getCurrentPosition(g=>{P={lat:g.coords.latitude,lng:g.coords.longitude,n:'Current location'};res(P)},()=>res(null),{timeout:4000})})}
+
+// ---- Nearby help: nearest police stations and hospitals, within a chosen range ----
+let NF='all',NK=3,NC=null,NRES=null;
+async function openNear(){show('near');clearMarks();NC=(await here())||{lat:24.8607,lng:67.0011};MAP.view(NC.lat,NC.lng,14);loadNear()}
+function setRange(k){NK=k;loadNear()}
+async function loadNear(){NRES=null;chips();nl.innerHTML='<p>Searching within '+NK+' km…</p>';const c=NC;let it;
+ try{const els=await ovq('[out:json][timeout:25];nwr(around:'+NK*1000+','+c.lat+','+c.lng+')[amenity~"^(police|hospital)$"];out center 300;');
+  it=els.map(e=>{const o=pt(e);return{lat:o.lat,lng:o.lng,t:e.tags.amenity,n:e.tags.name||(e.tags.amenity==='police'?'Police station':'Hospital')}})}
+ catch(e1){try{const p=await nomFind('police station',c,NK);await sleep(1100);const h=await nomFind('hospital',c,NK);it=[...p.map(x=>({...x,t:'police'})),...h.map(x=>({...x,t:'hospital'}))]}
+  catch(e2){nl.innerHTML='<p>Could not load nearby places.</p><p style="font-size:12px">'+esc(e1.message+' / '+e2.message)+'</p><button class="btn g" onclick="loadNear()">Try again</button>';return}}
+ NRES=it.filter(x=>x.lat!=null).map(x=>({...x,d:km([x.lat,x.lng],[c.lat,c.lng])})).filter(x=>x.d<=NK+.3).sort((a,b)=>a.d-b.d);drawNear()}
+function chips(){const n=NRES||[],cnt=t=>t==='all'?n.length:n.filter(x=>x.t===t).length;
+ const f=[['all','All'],['police','🚓 Police'],['hospital','🏥 Hospitals']].map(([k,l])=>'<button class="btn g'+(NF===k?' on':'')+'" style="padding:10px 4px;font-size:14px" onclick="NF=\''+k+'\';drawNear()">'+l+(NRES?' ('+cnt(k)+')':'')+'</button>').join('');
+ const r=[2,5,10].map(k=>'<button class="btn g'+(NK===k?' on':'')+'" style="padding:8px 4px;font-size:13px" onclick="setRange('+k+')">'+k+' km</button>').join('');
+ nc.innerHTML='<div class=row>'+f+'</div><div class=row style="margin-top:2px">'+r+'</div>'}
+function drawNear(){chips();if(!NRES)return;const c=NC,it=NRES.filter(x=>NF==='all'||x.t===NF).slice(0,25);
+ MAP.pins(it.map(x=>({lat:x.lat,lng:x.lng,e:x.t==='police'?'🚓':'🏥',l:x.n})),'near');
+ if(!it.length){nl.innerHTML='<p>Nothing found within '+NK+' km. Try a bigger range.</p>';return}
+ MAP.fit([[c.lat,c.lng],...it.map(x=>[x.lat,x.lng])]);
+ nl.innerHTML='<p>Nearest first, within '+NK+' km. Tap one to zoom to it on the map.</p>'+it.map(x=>item(x.t==='police'?'🚓':'🏥',x.n,(x.t==='police'?'Police station':'Hospital')+' · '+x.d.toFixed(1)+' km away',x.lat,x.lng)).join('')}
+
+// ---- Auto-detected safe places (rule-based scoring of OpenStreetMap data, no API key) ----
+const SAFE={police:[95,'Police station','🚓'],hospital:[90,'Hospital','🏥'],fire_station:[85,'Fire station','🚒'],clinic:[70,'Clinic','⚕️'],pharmacy:[70,'Pharmacy','💊'],fuel:[65,'Petrol station','⛽'],bank:[60,'Bank','🏦'],mall:[75,'Shopping mall','🏬'],supermarket:[65,'Supermarket','🛒'],hotel:[60,'Hotel','🏨'],convenience:[50,'Convenience store','🏪'],cafe:[45,'Cafe','☕'],restaurant:[45,'Restaurant','🍽️']};
+function penal(o,why){const bad=PL.filter(p=>p.type==='unsafe'&&km([p.lat,p.lng],[o.lat,o.lng])<.25).length;if(bad)why.push(bad+' unsafe report'+(bad>1?'s':'')+' nearby');return 30*bad}
+function scoreSafe(e,o){const g=e.tags,k=g.amenity&&SAFE[g.amenity]?g.amenity:g.shop&&SAFE[g.shop]?g.shop:g.tourism==='hotel'?'hotel':null;if(!k)return null;
+ let sc=SAFE[k][0],why=[];if(g.opening_hours==='24/7'){sc+=15;why.push('open 24/7')}if(g.lit==='yes'){sc+=5;why.push('well lit')}if(g.opening_hours&&g.opening_hours!=='24/7')why.push('has opening hours');
+ sc-=penal(o,why);return{k,sc:Math.min(100,sc),why,ic:SAFE[k][2],type:SAFE[k][1],n:g.name||SAFE[k][1],lat:o.lat,lng:o.lng}}
+async function scanSafe(){if(!MAP)return;const c=MAP.center();ap.innerHTML='<p>Scanning this area…</p>';let it;
+ try{const a='(around:1500,'+c[0]+','+c[1]+')',els=await ovq('[out:json][timeout:25];(nwr'+a+'[amenity~"^(police|hospital|fire_station|clinic|pharmacy|fuel|bank|cafe|restaurant)$"];nwr'+a+'[shop~"^(mall|supermarket|convenience)$"];nwr'+a+'[tourism=hotel];);out center 150;');
+  it=els.map(e=>{const o=pt(e);return o.lat==null?null:scoreSafe(e,o)}).filter(Boolean)}
+ catch(e1){try{it=[];const o={lng:c[1],lat:c[0]};for(const [term,k] of [['police station','police'],['hospital','hospital'],['pharmacy','pharmacy'],['petrol station','fuel']]){(await nomFind(term,o,1.5)).forEach(x=>{const why=[],sc=SAFE[k][0]-penal(x,why);it.push({k,sc,why,ic:SAFE[k][2],type:SAFE[k][1],n:x.n,lat:x.lat,lng:x.lng})});await sleep(1100)}}
+  catch(e2){ap.innerHTML='<p>Could not scan this area.</p><p style="font-size:12px">'+esc(e1.message+' / '+e2.message)+'</p><button class="btn g" onclick="scanSafe()">Try again</button>';return}}
+ it=it.filter(x=>x.sc>=60).map(x=>({...x,d:km([x.lat,x.lng],c)})).filter(x=>x.d<=1.8).sort((a,b)=>b.sc-a.sc||a.d-b.d).slice(0,20);
+ MAP.pins(it.map(x=>({lat:x.lat,lng:x.lng,e:'🛡️',l:'Likely safe: '+x.n+' ('+x.type+')'})),'auto');
+ if(!it.length){ap.innerHTML='<p>No likely safe places found here. Try panning the map to a busier area and scan again.</p>';return}
+ ap.innerHTML='<p><b>'+it.length+'</b> likely safe places found (🛡️ on the map). Tap one to zoom to it.</p>'+it.map(x=>item(x.ic,x.n,x.type+' · '+(x.sc>=90?'Very high':x.sc>=75?'High':'Good')+' confidence'+(x.why.length?' · '+x.why.join(', '):'')+' · '+x.d.toFixed(1)+' km',x.lat,x.lng)).join('')}
+const ST=['Check-in','Guardians','Call','Police'],IX={prompt:0,guardians:1,call:2,police:3,acked:1},fmt=s=>Math.floor(s/60)+':'+String(Math.max(0,Math.round(s%60))).padStart(2,'0');
+feed('t',d=>{S=d;drawC();const ph=S.phase,hot=['guardians','call','police'].includes(ph),ago=S.now-S.last,left=({prompt:S.T.prompt,guardians:S.T.guard,call:S.T.call})[ph]-(S.now-S.t0);
+ ld.innerHTML=ST.map((x,i)=>'<div class="st'+((S.active&&ph!=='idle'&&i<=IX[ph])?(hot?' hot':' on'):'')+'"><i>'+(i+1)+'</i>'+x+'</div>').join('');
+ lt.textContent=ph==='idle'?'Monitoring':ph==='acked'?'Help on the way':'Alert';sg2.textContent=S.active?(ago>8?'📡 Signal weak. Last update '+Math.round(ago)+'s ago':'📡 Signal good'):'';
+ lh.textContent=ph==='idle'?"You're being watched over":ph==='prompt'?(S.reason==='stopped too long'?'Everything OK?':'Are you safe?'):ph==='acked'?(S.ack||'A guardian')+' is on it':'Guardians alerted';
+ ls.textContent=ph==='prompt'?'Answer within '+fmt(left)+' or your guardians are told to check on you.':ph==='guardians'?'Waiting for a guardian. Call escalation in '+fmt(left)+'.':ph==='call'?'No answer yet. Police escalation (simulated) in '+fmt(left)+'.':S.reason&&ph!=='idle'?S.reason:'Route checked every few seconds.';
+ pol.textContent=S.police?'Police console received: '+S.police.reason+' at '+S.police.at+' (simulated).':'No police packet.'});
+function hold(b,fn){let t;const s=()=>{b.classList.add('holding');t=setTimeout(()=>{fn();r()},1500)},r=()=>{clearTimeout(t);b.classList.remove('holding')};b.onpointerdown=s;['pointerup','pointerleave','pointercancel'].forEach(e=>b['on'+e]=r)}
+hold(sosb,()=>post('sos',{}));hold(sosb2,emergency);drawC();
+</script>
